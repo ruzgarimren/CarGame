@@ -2,7 +2,9 @@
 #include <ctime>
 #include <thread>
 #include <chrono>
-#include <conio.h>
+#include <cstdlib>
+#include <ctime>
+#include <ncurses.h>
 
 #define SCREEN_WIDTH 90
 #define SCREEN_HEIGHT 26
@@ -13,27 +15,21 @@ using namespace std;
 int enemyY[3];
 int enemyX[3];
 int enemyFlag[3];
-char car[4][4] = { ' ','±','±',' ',
-                    '±','±','±','±',
-                    ' ','±','±',' ',
-                    '±','±','±','±' };
+char car[4][4] = { ' ','|','|',' ',
+                    '|','|','|','|',
+                    ' ','|','|',' ',
+                    '|','|','|','|' };
 
 int carPos = WIN_WIDTH / 2;
 int score = 0;
 
-void gotoxy(int x, int y) {
-    cout << "\033[" << y << ";" << x << "H";
-}
-
 void drawBorder() {
     for (int i = 0; i < SCREEN_HEIGHT; i++) {
-        for (int j = 0; j < 17; j++) {
-            gotoxy(0 + j, i); cout << "±";
-            gotoxy(WIN_WIDTH - j, i); cout << "±";
-        }
+        mvaddch(i, 0, '|');
+        mvaddch(i, WIN_WIDTH, '|');
     }
     for (int i = 0; i < SCREEN_HEIGHT; i++) {
-        gotoxy(SCREEN_WIDTH, i); cout << "±";
+        mvaddch(i, SCREEN_WIDTH, '|');
     }
 }
 
@@ -43,19 +39,19 @@ void genEnemy(int ind) {
 
 void drawEnemy(int ind) {
     if (enemyFlag[ind] == true) {
-        gotoxy(enemyX[ind], enemyY[ind]);   cout << "****";
-        gotoxy(enemyX[ind], enemyY[ind] + 1); cout << " ** ";
-        gotoxy(enemyX[ind], enemyY[ind] + 2); cout << "****";
-        gotoxy(enemyX[ind], enemyY[ind] + 3); cout << " ** ";
+        mvaddstr(enemyY[ind], enemyX[ind], "****");
+        mvaddstr(enemyY[ind] + 1, enemyX[ind], " ** ");
+        mvaddstr(enemyY[ind] + 2, enemyX[ind], "****");
+        mvaddstr(enemyY[ind] + 3, enemyX[ind], " ** ");
     }
 }
 
 void eraseEnemy(int ind) {
     if (enemyFlag[ind] == true) {
-        gotoxy(enemyX[ind], enemyY[ind]); cout << "    ";
-        gotoxy(enemyX[ind], enemyY[ind] + 1); cout << "    ";
-        gotoxy(enemyX[ind], enemyY[ind] + 2); cout << "    ";
-        gotoxy(enemyX[ind], enemyY[ind] + 3); cout << "    ";
+        mvaddstr(enemyY[ind], enemyX[ind], "    ");
+        mvaddstr(enemyY[ind] + 1, enemyX[ind], "    ");
+        mvaddstr(enemyY[ind] + 2, enemyX[ind], "    ");
+        mvaddstr(enemyY[ind] + 3, enemyX[ind], "    ");
     }
 }
 
@@ -68,7 +64,7 @@ void resetEnemy(int ind) {
 void drawCar() {
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
-            gotoxy(j + carPos, i + 22); cout << car[i][j];
+            mvaddch(i + 22, j + carPos, car[i][j]);
         }
     }
 }
@@ -76,10 +72,11 @@ void drawCar() {
 void eraseCar() {
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
-            gotoxy(j + carPos, i + 22); cout << " ";
+            mvaddch(i + 22, j + carPos, ' ');
         }
     }
 }
+
 
 int collision() {
     if (enemyY[0] + 4 >= 23) {
@@ -91,29 +88,30 @@ int collision() {
 }
 
 void gameover() {
-    system("cls");
-    cout << endl;
-    cout << "\t\t--------------------------" << endl;
-    cout << "\t\t-------- Game Over -------" << endl;
-    cout << "\t\t--------------------------" << endl << endl;
-    cout << "\t\tPress any key to go back to menu.";
+    clear();
+    mvprintw(10, 30, "--------------------------");
+    mvprintw(11, 30, "-------- Game Over -------");
+    mvprintw(12, 30, "--------------------------");
+    mvprintw(14, 30, "Press any key to go back to menu.");
+    refresh();
     getch();
 }
 
 void updateScore() {
-    gotoxy(WIN_WIDTH + 7, 5); cout << "Score: " << score << endl;
+    mvprintw(5, WIN_WIDTH + 7, "Score: %d", score);
+    refresh();
 }
 
 void instructions() {
-
-    system("cls");
-    cout << "Instructions";
-    cout << "\n----------------";
-    cout << "\n Avoid Cars by moving left or right. ";
-    cout << "\n\n Press 'a' to move left";
-    cout << "\n Press 'd' to move right";
-    cout << "\n Press 'escape' to exit";
-    cout << "\n\nPress any key to go back to menu";
+    clear();
+    mvprintw(0, 30, "Instructions");
+    mvprintw(1, 30, "----------------");
+    mvprintw(2, 30, "Avoid Cars by moving left or right.");
+    mvprintw(4, 30, "Press 'a' to move left");
+    mvprintw(5, 30, "Press 'd' to move right");
+    mvprintw(6, 30, "Press 'escape' to exit");
+    mvprintw(8, 30, "Press any key to go back to menu.");
+    refresh();
     getch();
 }
 
@@ -124,38 +122,43 @@ void play() {
     enemyFlag[1] = 0;
     enemyY[0] = enemyY[1] = 1;
 
-    system("cls");
+    initscr();
+    noecho();
+    cbreak();
+    curs_set(0);
+    keypad(stdscr, TRUE);
+
     drawBorder();
     updateScore();
     genEnemy(0);
     genEnemy(1);
 
-    gotoxy(WIN_WIDTH + 7, 2); cout << "Car Game";
-    gotoxy(WIN_WIDTH + 6, 4); cout << "----------";
-    gotoxy(WIN_WIDTH + 6, 6); cout << "----------";
-    gotoxy(WIN_WIDTH + 7, 12); cout << "Control ";
-    gotoxy(WIN_WIDTH + 7, 13); cout << "-------- ";
-    gotoxy(WIN_WIDTH + 2, 14); cout << " A Key - Left";
-    gotoxy(WIN_WIDTH + 2, 15); cout << " D Key - Right";
+    mvprintw(2, WIN_WIDTH + 7, "Car Game");
+    mvprintw(4, WIN_WIDTH + 6, "----------");
+    mvprintw(6, WIN_WIDTH + 6, "----------");
+    mvprintw(12, WIN_WIDTH + 7, "Control ");
+    mvprintw(13, WIN_WIDTH + 7, "-------- ");
+    mvprintw(14, WIN_WIDTH + 2, " A Key - Left");
+    mvprintw(15, WIN_WIDTH + 2, " D Key - Right");
 
-    gotoxy(18, 5); cout << "Press any key to start";
+    mvprintw(5, 18, "Press any key to start");
+    refresh();
     getch();
-    gotoxy(18, 5); cout << "                      ";
+    mvprintw(5, 18, "                      ");
+    refresh();
 
     while (1) {
-        if (_kbhit()) {
-            char ch = _getch();
-            if (ch == 'a' || ch == 'A') {
-                if (carPos > 18)
-                    carPos -= 4;
-            }
-            if (ch == 'd' || ch == 'D') {
-                if (carPos < 50)
-                    carPos += 4;
-            }
-            if (ch == 27) {
-                break;
-            }
+        int ch = getch();
+        if (ch == 'a' || ch == 'A') {
+            if (carPos > 18)
+                carPos -= 4;
+        }
+        if (ch == 'd' || ch == 'D') {
+            if (carPos < 50)
+                carPos += 4;
+        }
+        if (ch == 27) {
+            break;
         }
 
         drawCar();
@@ -163,6 +166,7 @@ void play() {
         drawEnemy(1);
         if (collision() == 1) {
             gameover();
+            endwin();
             return;
         }
         this_thread::sleep_for(chrono::milliseconds(50));
@@ -191,8 +195,31 @@ void play() {
             updateScore();
         }
     }
+
+    endwin();
 }
 
 int main() {
     srand(static_cast<unsigned>(time(NULL)));
 
+    while (1) {
+        clear();
+        mvprintw(5, 30, " -------------------------- ");
+        mvprintw(6, 30, " |        Car Game        | ");
+        mvprintw(7, 30, " --------------------------");
+        mvprintw(9, 30, "1. Start Game");
+        mvprintw(10, 30, "2. Instructions");
+        mvprintw(11, 30, "3. Quit");
+        mvprintw(13, 30, "Select option: ");
+        int op = getch();
+
+        if (op == '1')
+            play();
+        else if (op == '2')
+            instructions();
+        else if (op == '3')
+            break;
+    }
+
+    return 0;
+}
