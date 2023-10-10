@@ -196,6 +196,7 @@ void play() {
         }
     }
 
+
     endwin();
 }
 
